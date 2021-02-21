@@ -34,10 +34,27 @@ class App extends Component {
       imageUrl:'',
       box: {},
       route: 'signin',
-      isSignedIn: false
+      isSignedIn: false,
+      user: {
+        id: '',
+        name: '',
+        email: '',
+        entries: 0,
+        joined: ''
+      }
     }
   }
 
+loadUser = (data) => {
+  this.setState({user:{
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      entries: data.entries,
+      joined: data.joined
+    }
+  })
+}
 calculateFaceLocation = (data) => {
   const clarifaiFace = data.outputs[0].data.regions[0].region_info.bounding_box;
   const image = document.getElementById('inputImage');
@@ -68,7 +85,22 @@ onButtonSubmit = () => {
   app.models.predict(
     Clarifai.FACE_DETECT_MODEL,
     this.state.input)
-    .then(response => this.displayFaceBox(this.calculateFaceLocation(response)))
+    .then(response => {
+      if(response){
+        fetch('http:localhost:3000/image', {
+          method: 'put',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            id: this.state.user.id
+          })
+        })
+        .then(response => response.json())
+        .then(count => {
+          this.setState(Object.assign(this.state.user, {entries:count}))
+        })
+      }
+       this.displayFaceBox(this.calculateFaceLocation(response))
+    })   
     .catch(err => console.log(err));
 }
 
@@ -82,7 +114,7 @@ onRouteChange = (route) => {
 }
 
   render(){
-    const { isSignedIn, imageUrl, route, box } = this.state
+    const { isSignedIn, imageUrl, route, box, user } = this.state
     return(
       <div className = 'App'>
         <Particles className = 'particles'
@@ -92,7 +124,7 @@ onRouteChange = (route) => {
         { this.state.route === 'home' 
           ? <div>
             <Logo />
-            <Rank />
+            <Rank user = {user}/>
             <ImageLinkForm 
             onInputChange = {this.onInputChange}
             onButtonSubmit = {this.onButtonSubmit}
@@ -100,8 +132,8 @@ onRouteChange = (route) => {
             <FaceRecognition box= {box} imageUrl = {imageUrl}/>
           </div> 
           :(route === 'signin')
-           ?<Signin onRouteChange = {this.onRouteChange}/>
-           :<Register onRouteChange = {this.onRouteChange}/>
+           ?<Signin onRouteChange = {this.onRouteChange} loadUser = {this.loadUser}/>
+           :<Register loadUser = {this.loadUser} onRouteChange = {this.onRouteChange}/>
         }
       </div>
     )
