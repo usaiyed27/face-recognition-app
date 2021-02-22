@@ -26,10 +26,7 @@ const particleOptions = {
   }
 }
 
-class App extends Component {
-  constructor(){
-    super();
-    this.state = {
+const initialState = {
       input: '',
       imageUrl:'',
       box: {},
@@ -43,6 +40,10 @@ class App extends Component {
         joined: ''
       }
     }
+class App extends Component {
+  constructor(){
+    super();
+    this.state = initialState
   }
 
 loadUser = (data) => {
@@ -60,7 +61,6 @@ calculateFaceLocation = (data) => {
   const image = document.getElementById('inputImage');
   const width = Number(image.width);
   const height = Number(image.height);
-  console.log(width, height);
   return {
     leftCol: clarifaiFace.left_col * width,
     topRow: clarifaiFace.top_row * height,
@@ -70,7 +70,6 @@ calculateFaceLocation = (data) => {
 }
 
 displayFaceBox = (box) => {
-  console.log(box);
   this.setState({box:box})
 }
 
@@ -87,7 +86,7 @@ onButtonSubmit = () => {
     this.state.input)
     .then(response => {
       if(response){
-        fetch('http:localhost:3000/image', {
+        fetch('http://localhost:3000/image', {
           method: 'put',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({
@@ -98,6 +97,7 @@ onButtonSubmit = () => {
         .then(count => {
           this.setState(Object.assign(this.state.user, {entries:count}))
         })
+        .catch(console.log)
       }
        this.displayFaceBox(this.calculateFaceLocation(response))
     })   
@@ -106,7 +106,7 @@ onButtonSubmit = () => {
 
 onRouteChange = (route) => {
   if(route === 'signout'){
-    this.setState({isSignedIn: false})
+    this.setState(initialState)
   }else if(route === 'home'){
     this.setState({isSignedIn: true})
   }
